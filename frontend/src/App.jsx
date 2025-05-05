@@ -1,9 +1,11 @@
 import './App.css'
+import Registration from './components/Registration'
 
 function App() {
   return (
     <div className="App">
-      <h1>hi it is working fine</h1>
+     
+      <Registration />
     </div>
   )
 }
