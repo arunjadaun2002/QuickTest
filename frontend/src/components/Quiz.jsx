@@ -31,34 +31,59 @@ const Quiz = ({ studentName, studentEmail, studentPhone }) => {
   const resultRef = useRef(null);
   const warningTimeoutRef = useRef(null);
 
-  const handleSubmit = async () => {
+  const questions = quiz?.questions || [];
+
+  const handleSubmit = async (isAuto = false) => {
     setSubmitted(true);
     clearInterval(timerRef.current);
     
     // Exit fullscreen mode when submitting
-    if (document.exitFullscreen) {
-      document.exitFullscreen();
-    } else if (document.webkitExitFullscreen) {
-      document.webkitExitFullscreen();
-    } else if (document.msExitFullscreen) {
-      document.msExitFullscreen();
+    try {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      } else if (document.msExitFullscreen) {
+        document.msExitFullscreen();
+      }
+    } catch (e) {
+      // Ignore fullscreen exit errors
     }
 
     const name = studentName;
     const email = studentEmail;
     const phone = studentPhone;
+    
     // Calculate score: 1 mark per correct answer (by letter, case-insensitive)
     let score = 0;
     questions.forEach((q, idx) => {
       if ((answers[idx] || '').trim().toUpperCase() === (q.answer || '').trim().toUpperCase()) score += 1;
     });
-    if (name && email && phone && score >= 0) {
-      try {
-        await axios.post('https://quicktest-backend.onrender.com/result', { name, email, phone, score });
-        setResultSaved(true);
-      } catch (e) {
-        setResultSaved(false);
-      }
+
+    console.log('Submitting result with data:', { name, email, phone, score, autoSubmitted: isAuto });
+
+    if (!name || !email || !phone) {
+      console.error('Missing required fields:', { name, email, phone });
+      setError('Missing required student information');
+      return;
+    }
+
+    if (score < 0) {
+      console.error('Invalid score:', score);
+      setError('Invalid score calculated');
+      return;
+    }
+
+    try {
+      const response = await axios.post('https://quicktest-backend.onrender.com/result', 
+        { name, email, phone, score, autoSubmitted: isAuto }
+      );
+      console.log('Result saved successfully:', response.data);
+      setResultSaved(true);
+    } catch (error) {
+      console.error('Error saving result:', error.response?.data || error.message);
+      setError('Failed to save result. Please try again.');
+      setResultSaved(false);
     }
   };
 
@@ -105,7 +130,7 @@ const Quiz = ({ studentName, studentEmail, studentPhone }) => {
           const newWarnings = w + 1;
           if (newWarnings >= 3) {
             setAutoSubmitted(true);
-            handleSubmit();
+            handleSubmit(true);
           } else {
             setShowWarning(true);
             // Clear any existing timeout
@@ -164,7 +189,7 @@ const Quiz = ({ studentName, studentEmail, studentPhone }) => {
         setSecurityViolations(prev => {
           const newViolations = prev + 1;
           if (newViolations >= MAX_VIOLATIONS) {
-            handleSubmit();
+            handleSubmit(true);
           }
           return newViolations;
         });
@@ -205,7 +230,7 @@ const Quiz = ({ studentName, studentEmail, studentPhone }) => {
         setSecurityViolations(prev => {
           const newViolations = prev + 1;
           if (newViolations >= MAX_VIOLATIONS) {
-            handleSubmit();
+            handleSubmit(true);
           }
           return newViolations;
         });
@@ -223,7 +248,7 @@ const Quiz = ({ studentName, studentEmail, studentPhone }) => {
       setSecurityViolations(prev => {
         const newViolations = prev + 1;
         if (newViolations >= MAX_VIOLATIONS) {
-          handleSubmit();
+          handleSubmit(true);
         }
         return newViolations;
       });
@@ -240,7 +265,7 @@ const Quiz = ({ studentName, studentEmail, studentPhone }) => {
         setSecurityViolations(prev => {
           const newViolations = prev + 1;
           if (newViolations >= MAX_VIOLATIONS) {
-            handleSubmit();
+            handleSubmit(true);
           }
           return newViolations;
         });
@@ -255,7 +280,6 @@ const Quiz = ({ studentName, studentEmail, studentPhone }) => {
   if (error) return <div>{error}</div>;
   if (!quiz) return <div>No quiz found.</div>;
 
-  const questions = quiz.questions || [];
   const q = questions[current];
 
   if (!q) {
@@ -484,7 +508,7 @@ const Quiz = ({ studentName, studentEmail, studentPhone }) => {
               );
             })}
           </div>
-          <button onClick={handleSubmit} style={{ padding: '14px 40px', borderRadius: 8, background: '#3b4cb8', color: '#fff', fontWeight: 700, fontSize: 18, border: 'none', marginTop: 16, width: '100%', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>Submit</button>
+          <button onClick={() => handleSubmit()} style={{ padding: '14px 40px', borderRadius: 8, background: '#3b4cb8', color: '#fff', fontWeight: 700, fontSize: 18, border: 'none', marginTop: 16, width: '100%', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>Submit</button>
         </div>
       </div>
     </div>

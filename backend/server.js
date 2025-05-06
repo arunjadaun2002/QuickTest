@@ -13,9 +13,64 @@ app.use(express.json());
 
 // MongoDB Connection
 const MONGODB_URI = process.env.MONGODB_URI;
-mongoose.connect(MONGODB_URI)
-  .then(() => console.log('MongoDB Connected'))
-  .catch(err => console.log('MongoDB Connection Error:', err));
+if (!MONGODB_URI) {
+  console.error('MONGODB_URI is not defined in environment variables');
+  process.exit(1);
+}
+
+// Log connection attempt
+console.log('Attempting to connect to MongoDB...');
+console.log('Database name from URI:', MONGODB_URI.split('/').pop().split('?')[0]);
+
+mongoose.connect(MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
+})
+.then(() => {
+  console.log('MongoDB Connected Successfully');
+  console.log('Connected to database:', mongoose.connection.name);
+  console.log('Connection host:', mongoose.connection.host);
+  
+  // List all collections
+  return mongoose.connection.db.listCollections().toArray();
+})
+.then(collections => {
+  console.log('Available collections:', collections.map(c => c.name));
+  
+  // Check if our collections exist
+  const requiredCollections = ['result', 'StudentInfo', 'QuizInfo'];
+  const existingCollections = collections.map(c => c.name);
+  
+  console.log('Checking required collections...');
+  requiredCollections.forEach(collection => {
+    if (existingCollections.includes(collection)) {
+      console.log(`✓ Collection '${collection}' exists`);
+    } else {
+      console.log(`✗ Collection '${collection}' does not exist`);
+    }
+  });
+})
+.catch(err => {
+  console.error('MongoDB Connection Error:', err);
+  if (err.name === 'MongoServerSelectionError') {
+    console.error('Could not connect to MongoDB server. Please check:');
+    console.error('1. Your internet connection');
+    console.error('2. The MongoDB Atlas IP whitelist');
+    console.error('3. Your username and password');
+  }
+  process.exit(1);
+});
+
+// Add connection error handler
+mongoose.connection.on('error', err => {
+  console.error('MongoDB connection error:', err);
+});
+
+// Add disconnection handler
+mongoose.connection.on('disconnected', () => {
+  console.log('MongoDB disconnected');
+});
 
 // StudentInfo model
 const studentInfoSchema = new mongoose.Schema({
@@ -36,6 +91,8 @@ const resultSchema = new mongoose.Schema({
   email: { type: String, required: true },
   phone: { type: String, required: true },
   score: { type: Number, required: true },
+  autoSubmitted: { type: Boolean, default: false },
+  timestamp: { type: Date, default: Date.now }
 });
 const Result = mongoose.model('Result', resultSchema, 'result');
 
@@ -64,16 +121,167 @@ app.get('/quiz', async (req, res) => {
 
 // Endpoint to save result
 app.post('/result', async (req, res) => {
-  console.log('Received result:', req.body);
+  console.log('Received result request:', req.body);
+  
+  // Validate required fields
+  const { name, email, phone, score, autoSubmitted } = req.body;
+  if (!name || !email || !phone || score === undefined) {
+    console.error('Missing required fields:', { name, email, phone, score });
+    return res.status(400).json({ 
+      message: 'Missing required fields', 
+      details: { name, email, phone, score }
+    });
+  }
+
+  // Validate score is a number and non-negative
+  if (typeof score !== 'number' || score < 0) {
+    console.error('Invalid score:', score);
+    return res.status(400).json({ 
+      message: 'Invalid score value', 
+      details: { score }
+    });
+  }
+
   try {
-    const { name, email, phone, score } = req.body;
-    const result = new Result({ name, email, phone, score });
-    await result.save();
-    console.log('Saved result:', result);
-    res.status(201).json({ message: 'Result saved successfully' });
+    // Log the current database and collection
+    console.log('Current database:', mongoose.connection.name);
+    console.log('Target collection:', Result.collection.name);
+
+    const result = new Result({ name, email, phone, score, autoSubmitted });
+    const savedResult = await result.save();
+    console.log('Successfully saved result to collection:', Result.collection.name);
+    console.log('Saved result:', savedResult);
+    
+    // Verify the data was saved by querying it back
+    const verifiedResult = await Result.findById(savedResult._id);
+    console.log('Verified saved result:', verifiedResult);
+    
+    // List all documents in the collection
+    const allResults = await Result.find({});
+    console.log('Total documents in collection:', allResults.length);
+    
+    res.status(201).json({ 
+      message: 'Result saved successfully',
+      result: savedResult
+    });
   } catch (error) {
     console.error('Error saving result:', error);
-    res.status(500).json({ message: 'Failed to save result', error: error.message });
+    res.status(500).json({ 
+      message: 'Failed to save result', 
+      error: error.message,
+      details: error.errors
+    });
+  }
+});
+
+// Test endpoint to verify database connectivity
+app.post('/test-db', async (req, res) => {
+  try {
+    // Create a test document
+    const testDoc = new Result({
+      name: 'Test User',
+      email: 'test@example.com',
+      phone: '1234567890',
+      score: 100
+    });
+    
+    // Save the test document
+    const savedDoc = await testDoc.save();
+    console.log('Test document saved:', savedDoc);
+    
+    // Query all documents
+    const allDocs = await Result.find({});
+    console.log('Total documents in collection:', allDocs.length);
+    console.log('All documents:', allDocs);
+    
+    res.json({
+      message: 'Test successful',
+      savedDocument: savedDoc,
+      totalDocuments: allDocs.length,
+      allDocuments: allDocs
+    });
+  } catch (error) {
+    console.error('Test failed:', error);
+    res.status(500).json({
+      message: 'Test failed',
+      error: error.message
+    });
+  }
+});
+
+// Test endpoint to insert a sample document
+app.post('/insert-test', async (req, res) => {
+  try {
+    const testDoc = new Result({
+      name: 'Test User',
+      email: 'test@example.com',
+      phone: '1234567890',
+      score: 100,
+      timestamp: new Date()
+    });
+    
+    const savedDoc = await testDoc.save();
+    console.log('Test document saved:', savedDoc);
+    
+    // Verify the document was saved
+    const verifiedDoc = await Result.findById(savedDoc._id);
+    console.log('Verified document:', verifiedDoc);
+    
+    res.json({
+      message: 'Test document inserted successfully',
+      document: savedDoc,
+      verified: verifiedDoc
+    });
+  } catch (error) {
+    console.error('Test insertion failed:', error);
+    res.status(500).json({
+      message: 'Test insertion failed',
+      error: error.message
+    });
+  }
+});
+
+// Diagnostic endpoint to check database connection and data
+app.get('/check-db', async (req, res) => {
+  try {
+    // Get database info
+    const dbInfo = {
+      name: mongoose.connection.name,
+      host: mongoose.connection.host,
+      port: mongoose.connection.port,
+      collections: []
+    };
+
+    // List all collections
+    const collections = await mongoose.connection.db.listCollections().toArray();
+    dbInfo.collections = collections.map(c => c.name);
+
+    // Get document counts for each collection
+    const counts = {};
+    for (const collection of ['result', 'StudentInfo', 'QuizInfo']) {
+      try {
+        const count = await mongoose.connection.db.collection(collection).countDocuments();
+        counts[collection] = count;
+      } catch (err) {
+        counts[collection] = `Error: ${err.message}`;
+      }
+    }
+
+    // Get sample documents from result collection
+    const sampleResults = await Result.find({}).limit(5);
+
+    res.json({
+      databaseInfo: dbInfo,
+      collectionCounts: counts,
+      sampleResults: sampleResults,
+      connectionString: MONGODB_URI.replace(/\/\/[^:]+:[^@]+@/, '//<credentials>@')
+    });
+  } catch (error) {
+    console.error('Database check failed:', error);
+    res.status(500).json({
+      message: 'Database check failed',
+      error: error.message
+    });
   }
 });
 
