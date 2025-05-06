@@ -18,21 +18,34 @@ const Quiz = ({ studentName, studentEmail }) => {
   const [answers, setAnswers] = useState({});
   const [marked, setMarked] = useState({});
   const [visited, setVisited] = useState({});
-  const [timeLeft, setTimeLeft] = useState(20 * 60); // 20 min default
+  const [timeLeft, setTimeLeft] = useState(180 * 60); // 3 hours in seconds
   const [submitted, setSubmitted] = useState(false);
   const [warnings, setWarnings] = useState(0);
   const [showWarning, setShowWarning] = useState(false);
   const [resultSaved, setResultSaved] = useState(false);
   const [autoSubmitted, setAutoSubmitted] = useState(false);
+  const [isFullScreen, setIsFullScreen] = useState(false);
+  const [securityViolations, setSecurityViolations] = useState(0);
+  const MAX_VIOLATIONS = 3;
   const timerRef = useRef();
   const resultRef = useRef(null);
+  const warningTimeoutRef = useRef(null);
 
   const handleSubmit = async () => {
     setSubmitted(true);
     clearInterval(timerRef.current);
+    
+    // Exit fullscreen mode when submitting
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    } else if (document.webkitExitFullscreen) {
+      document.webkitExitFullscreen();
+    } else if (document.msExitFullscreen) {
+      document.msExitFullscreen();
+    }
+
     const name = studentName;
     const email = studentEmail;
-    // Calculate score: 1 mark per correct answer (by letter, case-insensitive)
     let score = 0;
     questions.forEach((q, idx) => {
       if ((answers[idx] || '').trim().toUpperCase() === (q.answer || '').trim().toUpperCase()) score += 1;
@@ -84,24 +97,36 @@ const Quiz = ({ studentName, studentEmail }) => {
 
   useEffect(() => {
     if (submitted) return;
-    const handleVisibility = () => {
+    const handleVisibilityChange = () => {
       if (document.hidden) {
         setWarnings((w) => {
-          if (w < 1) setShowWarning(true);
-          if (w + 1 >= 2) {
-            setShowWarning(false);
+          const newWarnings = w + 1;
+          if (newWarnings >= 3) {
             setAutoSubmitted(true);
             handleSubmit();
-            setTimeout(() => {
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }, 300);
+          } else {
+            setShowWarning(true);
+            // Clear any existing timeout
+            if (warningTimeoutRef.current) {
+              clearTimeout(warningTimeoutRef.current);
+            }
+            // Set new timeout
+            warningTimeoutRef.current = setTimeout(() => {
+              setShowWarning(false);
+            }, 3000);
           }
-          return w + 1;
+          return newWarnings;
         });
       }
     };
-    document.addEventListener('visibilitychange', handleVisibility);
-    return () => document.removeEventListener('visibilitychange', handleVisibility);
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (warningTimeoutRef.current) {
+        clearTimeout(warningTimeoutRef.current);
+      }
+    };
   }, [submitted]);
 
   useEffect(() => {
@@ -121,6 +146,108 @@ const Quiz = ({ studentName, studentEmail }) => {
       resultRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [submitted, autoSubmitted]);
+
+  useEffect(() => {
+    // Check fullscreen status
+    const checkFullScreen = () => {
+      const isFullScreenActive = 
+        document.fullscreenElement ||
+        document.webkitFullscreenElement ||
+        document.mozFullScreenElement ||
+        document.msFullscreenElement;
+      
+      setIsFullScreen(isFullScreenActive);
+      
+      if (!isFullScreenActive && !submitted) {
+        setSecurityViolations(prev => {
+          const newViolations = prev + 1;
+          if (newViolations >= MAX_VIOLATIONS) {
+            handleSubmit();
+          }
+          return newViolations;
+        });
+      }
+    };
+
+    // Add fullscreen change listeners
+    document.addEventListener('fullscreenchange', checkFullScreen);
+    document.addEventListener('webkitfullscreenchange', checkFullScreen);
+    document.addEventListener('mozfullscreenchange', checkFullScreen);
+    document.addEventListener('MSFullscreenChange', checkFullScreen);
+
+    // Initial check
+    checkFullScreen();
+
+    return () => {
+      document.removeEventListener('fullscreenchange', checkFullScreen);
+      document.removeEventListener('webkitfullscreenchange', checkFullScreen);
+      document.removeEventListener('mozfullscreenchange', checkFullScreen);
+      document.removeEventListener('MSFullscreenChange', checkFullScreen);
+    };
+  }, [submitted]);
+
+  // Prevent keyboard shortcuts
+  useEffect(() => {
+    const preventShortcuts = (e) => {
+      if (
+        (e.ctrlKey || e.metaKey) && (
+          e.key === 'c' || // Copy
+          e.key === 'v' || // Paste
+          e.key === 'a' || // Select all
+          e.key === 'p' || // Print
+          e.key === 's' || // Save
+          e.key === 'u'    // View source
+        )
+      ) {
+        e.preventDefault();
+        setSecurityViolations(prev => {
+          const newViolations = prev + 1;
+          if (newViolations >= MAX_VIOLATIONS) {
+            handleSubmit();
+          }
+          return newViolations;
+        });
+      }
+    };
+
+    document.addEventListener('keydown', preventShortcuts);
+    return () => document.removeEventListener('keydown', preventShortcuts);
+  }, []);
+
+  // Prevent right-click
+  useEffect(() => {
+    const preventContextMenu = (e) => {
+      e.preventDefault();
+      setSecurityViolations(prev => {
+        const newViolations = prev + 1;
+        if (newViolations >= MAX_VIOLATIONS) {
+          handleSubmit();
+        }
+        return newViolations;
+      });
+    };
+
+    document.addEventListener('contextmenu', preventContextMenu);
+    return () => document.removeEventListener('contextmenu', preventContextMenu);
+  }, []);
+
+  // Prevent tab switching
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden && !submitted) {
+        setSecurityViolations(prev => {
+          const newViolations = prev + 1;
+          if (newViolations >= MAX_VIOLATIONS) {
+            handleSubmit();
+          }
+          return newViolations;
+        });
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [submitted]);
 
   if (loading) return <div>Loading quiz...</div>;
   if (error) return <div>{error}</div>;
@@ -179,7 +306,19 @@ const Quiz = ({ studentName, studentEmail }) => {
     return (
       <div ref={resultRef} style={{ maxWidth: 900, margin: '2rem auto', background: '#fff', borderRadius: 12, boxShadow: '0 2px 16px rgba(0,0,0,0.08)', padding: '2rem' }}>
         <h2 style={{ color: '#185a9d', marginBottom: '1.5rem' }}>Quiz Results</h2>
-        {autoSubmitted && <div style={{ color: '#d7263d', fontWeight: 700, marginBottom: 16 }}>Test auto-submitted due to exceeding tab switch limit.</div>}
+        {autoSubmitted && (
+          <div style={{ 
+            background: '#fff3e0', 
+            border: '1px solid #ff9800', 
+            padding: '1rem', 
+            borderRadius: '8px', 
+            marginBottom: '1.5rem',
+            color: '#d7263d',
+            fontWeight: 700 
+          }}>
+            Test auto-submitted due to multiple tab switching violations.
+          </div>
+        )}
         <div style={{ marginBottom: 24, fontSize: 18 }}>
           <b>Score: {score} / {questions.length}</b>
         </div>
@@ -202,8 +341,76 @@ const Quiz = ({ studentName, studentEmail }) => {
     );
   }
 
+  if (!isFullScreen && !submitted) {
+    return (
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0,0,0,0.9)',
+        zIndex: 1000,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        color: '#fff',
+        fontSize: '1.5rem',
+        textAlign: 'center',
+        padding: '2rem'
+      }}>
+        <h2 style={{ marginBottom: '1rem' }}>Full Screen Required</h2>
+        <p>Please enable full screen mode to continue with the test.</p>
+        <p style={{ color: '#ff4444', marginTop: '1rem' }}>
+          Warning: {MAX_VIOLATIONS - securityViolations} violations remaining before auto-submit
+        </p>
+        <button 
+          onClick={() => {
+            if (document.documentElement.requestFullscreen) {
+              document.documentElement.requestFullscreen();
+            } else if (document.documentElement.webkitRequestFullscreen) {
+              document.documentElement.webkitRequestFullscreen();
+            } else if (document.documentElement.msRequestFullscreen) {
+              document.documentElement.msRequestFullscreen();
+            }
+          }}
+          style={{
+            marginTop: '1rem',
+            padding: '1rem 2rem',
+            fontSize: '1.2rem',
+            background: '#4CAF50',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '5px',
+            cursor: 'pointer'
+          }}
+        >
+          Enable Full Screen
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#f8f8f8' }}>
+      {showWarning && (
+        <div style={{ 
+          position: 'fixed', 
+          top: '20px', 
+          left: '50%', 
+          transform: 'translateX(-50%)',
+          background: '#ff4444',
+          color: '#fff',
+          padding: '1rem 2rem',
+          borderRadius: '8px',
+          zIndex: 1000,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+          animation: 'fadeIn 0.3s ease-in-out'
+        }}>
+          Warning: Tab switching detected! {3 - warnings} warnings remaining before auto-submission.
+        </div>
+      )}
       {/* Main Question Panel */}
       <div style={{ flex: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', minHeight: '100vh', paddingTop: '4vh' }}>
         <div style={{ background: '#fff', borderRadius: 18, boxShadow: '0 8px 32px rgba(80,80,160,0.10)', padding: '2.5rem 2rem', margin: '0 auto', maxWidth: 700, width: '100%', marginTop: '2vh', marginBottom: '2vh', border: '1.5px solid #e0e0e0' }}>
@@ -236,12 +443,6 @@ const Quiz = ({ studentName, studentEmail }) => {
             <button onClick={handlePrev} disabled={current === 0} style={{ padding: '12px 28px', borderRadius: 8, background: '#2196f3', color: '#fff', border: 'none', fontWeight: 700, fontSize: 16, opacity: current === 0 ? 0.5 : 1 }}>Previous</button>
             <button onClick={handleNext} disabled={current === questions.length - 1} style={{ padding: '12px 28px', borderRadius: 8, background: '#2196f3', color: '#fff', border: 'none', fontWeight: 700, fontSize: 16, opacity: current === questions.length - 1 ? 0.5 : 1 }}>Save & Next</button>
           </div>
-          {showWarning && (
-            <div style={{ marginTop: 24, color: '#d7263d', fontWeight: 700, fontSize: 18, background: '#fff3e0', padding: 16, borderRadius: 8, border: '1px solid #ff9800' }}>
-              Warning: Tab switch or minimize detected!<br />
-              You have {2 - warnings} warning(s) left before auto-submit.
-            </div>
-          )}
         </div>
       </div>
       {/* Sidebar */}
