@@ -30,6 +30,15 @@ const Quiz = ({ studentName, studentEmail, studentPhone }) => {
   const timerRef = useRef();
   const resultRef = useRef(null);
   const warningTimeoutRef = useRef(null);
+  const [showSidebar, setShowSidebar] = useState(true);
+  const SIDEBAR_WIDTH_DESKTOP = 320;
+  const SIDEBAR_WIDTH_MOBILE = 0.9 * window.innerWidth;
+  const isMobile = window.innerWidth <= 700;
+  const SIDEBAR_WIDTH = isMobile ? SIDEBAR_WIDTH_MOBILE : SIDEBAR_WIDTH_DESKTOP;
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [feedbackSubject, setFeedbackSubject] = useState('');
+  const [feedbackDetail, setFeedbackDetail] = useState('');
+  const [feedbackRating, setFeedbackRating] = useState(0);
 
   const questions = quiz?.questions || [];
 
@@ -366,6 +375,72 @@ const Quiz = ({ studentName, studentEmail, studentPhone }) => {
         <div style={{ marginTop: 32, textAlign: 'center' }}>
           <b>Thank you for taking the test!</b>
         </div>
+        {/* Feedback Button and Form */}
+        <div style={{ marginTop: 32, textAlign: 'center' }}>
+          {!showFeedback ? (
+            <button
+              onClick={() => setShowFeedback(true)}
+              style={{ padding: '12px 32px', borderRadius: 8, background: '#3b4cb8', color: '#fff', fontWeight: 700, fontSize: 18, border: 'none', marginTop: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.08)', cursor: 'pointer' }}
+            >
+              Feedback
+            </button>
+          ) : (
+            <div style={{ marginTop: 24, maxWidth: 400, marginLeft: 'auto', marginRight: 'auto', textAlign: 'left' }}>
+              <label style={{ fontWeight: 600, display: 'block', marginBottom: 8 }}>Subject:</label>
+              <input
+                type="text"
+                value={feedbackSubject}
+                onChange={e => setFeedbackSubject(e.target.value)}
+                style={{ width: '100%', padding: 10, borderRadius: 6, border: '1px solid #ccc', marginBottom: 16, fontSize: 16 }}
+                placeholder="Enter subject"
+              />
+              <label style={{ fontWeight: 600, display: 'block', marginBottom: 8 }}>Problem Detail:</label>
+              <textarea
+                value={feedbackDetail}
+                onChange={e => setFeedbackDetail(e.target.value)}
+                style={{ width: '100%', padding: 10, borderRadius: 6, border: '1px solid #ccc', minHeight: 80, fontSize: 16, marginBottom: 16 }}
+                placeholder="Describe your problem or feedback"
+              />
+              {/* Rating Bar */}
+              <div style={{ marginBottom: 18, textAlign: 'center' }}>
+                <span style={{ fontWeight: 600, marginRight: 8 }}>Rate your experience:</span>
+                {[1,2,3,4,5].map(star => (
+                  <span
+                    key={star}
+                    onClick={() => setFeedbackRating(star)}
+                    style={{
+                      cursor: 'pointer',
+                      fontSize: 28,
+                      color: feedbackRating >= star ? '#FFD600' : '#ccc',
+                      marginRight: 2,
+                      transition: 'color 0.2s',
+                      userSelect: 'none',
+                    }}
+                    aria-label={`Rate ${star} star${star > 1 ? 's' : ''}`}
+                  >
+                    ★
+                  </span>
+                ))}
+              </div>
+              <button
+                onClick={() => {
+                  const mailto = `mailto:arunjadaun2002@gmail.com?subject=${encodeURIComponent(feedbackSubject)}&body=${encodeURIComponent(feedbackDetail)}`;
+                  window.location.href = mailto;
+                }}
+                style={{ padding: '10px 28px', borderRadius: 8, background: '#388e3c', color: '#fff', fontWeight: 700, fontSize: 16, border: 'none', marginRight: 12, cursor: 'pointer' }}
+                disabled={!feedbackSubject || !feedbackDetail}
+              >
+                Send
+              </button>
+              <button
+                onClick={() => setShowFeedback(false)}
+                style={{ padding: '10px 18px', borderRadius: 8, background: '#eee', color: '#333', fontWeight: 700, fontSize: 16, border: 'none', cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     );
   }
@@ -422,19 +497,11 @@ const Quiz = ({ studentName, studentEmail, studentPhone }) => {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f8f8f8' }}>
-      {/* Header Bar */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#3b4cb8', color: '#fff', padding: '1rem 2.5vw', fontWeight: 700, fontSize: 22, letterSpacing: 1 }}>
-        <div style={{ flex: 1, textAlign: 'left' }}>Mock Test (Set-2)</div>
-        <div style={{ flex: 1, textAlign: 'center', fontSize: 20 }}>Test Instructions:</div>
-        <div style={{ flex: 1, textAlign: 'right', fontSize: 18 }}>
-          Remaining Time: <span style={{ background: '#222', color: '#fff', borderRadius: 6, padding: '4px 12px', fontWeight: 700 }}>{formatTime(timeLeft)}</span>
-        </div>
-      </div>
+    <div style={{ minHeight: '100vh', background: '#f8f8f8', position: 'relative', overflowX: 'hidden' }}>
       <div style={{ display: 'flex', maxWidth: 1400, margin: '0 auto', minHeight: 'calc(100vh - 70px)' }}>
         {/* Main Question Panel */}
-        <div style={{ flex: 2.5, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', minHeight: '100vh', padding: '2.5vw 0 0 0' }}>
-          <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 4px 24px rgba(80,80,160,0.10)', padding: '2.5rem 2rem', margin: '0 auto', maxWidth: 800, width: '100%', border: '1.5px solid #e0e0e0' }}>
+        <div style={{ flex: 2.5, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', minHeight: '100vh', padding: isMobile ? '2vw 0 0 0' : '2.5vw 0 0 0', width: '100%' }}>
+          <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 4px 24px rgba(80,80,160,0.10)', padding: isMobile ? '1.2rem 0.5rem' : '2.5rem 2rem', margin: '0 auto', maxWidth: 800, width: '100%', border: '1.5px solid #e0e0e0' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
               <div style={{ fontWeight: 700, fontSize: 20 }}>Question {current + 1}</div>
               <div style={{ fontSize: 15, color: '#444' }}>Marks For Correct Response: <b>1.00</b> | Negative Marking: <b>0.00</b></div>
@@ -466,50 +533,124 @@ const Quiz = ({ studentName, studentEmail, studentPhone }) => {
             </div>
           </div>
         </div>
-        {/* Sidebar */}
-        <div style={{ flex: 1.2, background: '#fff', borderLeft: '1.5px solid #eee', padding: '2.5rem 1.5rem', minWidth: 320, display: 'flex', flexDirection: 'column', alignItems: 'center', boxShadow: '0 2px 16px rgba(80,80,160,0.06)' }}>
-          <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 10, textAlign: 'center' }}>Test Instructions:</div>
-          <div style={{ marginBottom: 16, fontSize: 15, color: '#444', textAlign: 'center' }}>Remaining Time: <b>{formatTime(timeLeft)}</b></div>
-          {/* Legend */}
-          <div style={{ display: 'flex', gap: 10, marginBottom: 18, flexWrap: 'wrap', justifyContent: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ width: 22, height: 22, background: '#4caf50', color: '#fff', borderRadius: 4, display: 'inline-block', textAlign: 'center', fontWeight: 700, fontSize: 15, lineHeight: '22px' }}>0</span> Answered</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ width: 22, height: 22, background: '#f44336', color: '#fff', borderRadius: 4, display: 'inline-block', textAlign: 'center', fontWeight: 700, fontSize: 15, lineHeight: '22px' }}>1</span> Not Answered</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ width: 22, height: 22, background: '#bdbdbd', color: '#222', borderRadius: 4, display: 'inline-block', textAlign: 'center', fontWeight: 700, fontSize: 15, lineHeight: '22px' }}>2</span> Not Visited</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ width: 22, height: 22, background: '#ff9800', color: '#fff', borderRadius: 4, display: 'inline-block', textAlign: 'center', fontWeight: 700, fontSize: 15, lineHeight: '22px' }}>3</span> Marked for Review</div>
-          </div>
-          <div style={{ fontWeight: 600, marginBottom: 10, fontSize: 16, textAlign: 'center' }}>Choose a Question</div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 36px)', gap: 8, marginBottom: 24, justifyContent: 'center' }}>
-            {questions.map((_, idx) => {
-              const status = getPaletteStatus(idx);
-              let bg = '#bdbdbd';
-              if (status === 'answered') bg = '#4caf50';
-              if (status === 'notAnswered') bg = '#f44336';
-              if (status === 'review') bg = '#ff9800';
-              return (
-                <button
-                  key={idx}
-                  onClick={() => handleJump(idx)}
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 6,
-                    border: current === idx ? '2px solid #3b4cb8' : '1px solid #ccc',
-                    background: bg,
-                    color: '#fff',
-                    fontWeight: 700,
-                    fontSize: 16,
-                    cursor: 'pointer',
-                    outline: 'none',
-                    marginBottom: 2
-                  }}
-                >
-                  {idx + 1}
-                </button>
-              );
-            })}
-          </div>
-          <button onClick={() => handleSubmit()} style={{ padding: '14px 40px', borderRadius: 8, background: '#3b4cb8', color: '#fff', fontWeight: 700, fontSize: 18, border: 'none', marginTop: 16, width: '100%', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>Submit</button>
+        {/* Sidebar with slide effect and overlay on mobile */}
+        <div
+          style={{
+            width: SIDEBAR_WIDTH,
+            minWidth: isMobile ? 'unset' : SIDEBAR_WIDTH_DESKTOP,
+            maxWidth: SIDEBAR_WIDTH,
+            background: '#fff',
+            borderLeft: isMobile ? 'none' : '1.5px solid #eee',
+            padding: isMobile ? '1.2rem 0.5rem' : '2.5rem 1.5rem',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            boxShadow: isMobile ? '0 2px 16px rgba(80,80,160,0.18)' : '0 2px 16px rgba(80,80,160,0.06)',
+            position: isMobile ? 'fixed' : 'relative',
+            top: 0,
+            right: 0,
+            bottom: 0,
+            left: isMobile ? 'unset' : 'unset',
+            transform: showSidebar ? 'translateX(0)' : `translateX(${SIDEBAR_WIDTH}px)`,
+            transition: 'transform 0.3s',
+            overflowY: 'auto',
+            height: isMobile ? '100vh' : '100%',
+            zIndex: 2500,
+          }}
+        >
+          {/* Toggle button at the top of the sidebar */}
+          {showSidebar && (
+            <button
+              onClick={() => setShowSidebar(false)}
+              style={{
+                alignSelf: 'flex-end',
+                marginBottom: 16,
+                background: '#3b4cb8',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '50%',
+                width: 40,
+                height: 40,
+                fontSize: 22,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 3000,
+              }}
+              aria-label="Hide Question List"
+            >
+              ◀
+            </button>
+          )}
+          {showSidebar && (
+            <>
+              <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 10, textAlign: 'center' }}>Test Instructions:</div>
+              <div style={{ marginBottom: 16, fontSize: 15, color: '#444', textAlign: 'center' }}>Remaining Time: <b>{formatTime(timeLeft)}</b></div>
+              <div style={{ fontWeight: 600, marginBottom: 10, fontSize: 16, textAlign: 'center' }}>Choose a Question</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 36px)', gap: 8, marginBottom: 24, justifyContent: 'center' }}>
+                {questions.map((_, idx) => {
+                  const status = getPaletteStatus(idx);
+                  let bg = '#bdbdbd';
+                  if (status === 'answered') bg = '#4caf50';
+                  if (status === 'notAnswered') bg = '#f44336';
+                  if (status === 'review') bg = '#ff9800';
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => handleJump(idx)}
+                      style={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: 6,
+                        border: current === idx ? '2px solid #3b4cb8' : '1px solid #ccc',
+                        background: bg,
+                        color: '#fff',
+                        fontWeight: 700,
+                        fontSize: 16,
+                        cursor: 'pointer',
+                        outline: 'none',
+                        marginBottom: 2
+                      }}
+                    >
+                      {idx + 1}
+                    </button>
+                  );
+                })}
+              </div>
+              <button onClick={() => handleSubmit()} style={{ padding: '14px 40px', borderRadius: 8, background: '#3b4cb8', color: '#fff', fontWeight: 700, fontSize: 18, border: 'none', marginTop: 16, width: '100%', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>Submit</button>
+            </>
+          )}
         </div>
+        {/* Show button at right edge when sidebar is hidden */}
+        {!showSidebar && (
+          <button
+            onClick={() => setShowSidebar(true)}
+            style={{
+              position: 'fixed',
+              top: '50%',
+              right: 0,
+              transform: 'translateY(-50%)',
+              background: '#3b4cb8',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '50%',
+              width: 40,
+              height: 40,
+              fontSize: 22,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 3000,
+            }}
+            aria-label="Show Question List"
+          >
+            ▶
+          </button>
+        )}
       </div>
     </div>
   );

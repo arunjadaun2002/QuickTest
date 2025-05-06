@@ -10,8 +10,8 @@ const Registration = () => {
   const [showInstructions, setShowInstructions] = useState(false);
   const [showQuiz, setShowQuiz] = useState(false);
   const [studentName, setStudentName] = useState('');
-  const [studentEmail, setStudentEmail] = useState('');
   const [studentPhone, setStudentPhone] = useState('');
+  const [studentEmail, setStudentEmail] = useState('');
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -69,8 +69,8 @@ const Registration = () => {
           <h2 style={{ marginBottom: '1.5rem', color: '#4e54c8' }}>Registration</h2>
           <form onSubmit={handleSubmit} style={{ width: '100%' }}>
             <input name="name" placeholder="Name" value={form.name} onChange={handleChange} required style={{ width: '100%', padding: '12px', margin: '10px 0', fontSize: '1.1rem', borderRadius: '8px', border: '1px solid #ccc' }} />
-            <input name="phone" placeholder="Phone" value={form.phone} onChange={handleChange} required style={{ width: '100%', padding: '12px', margin: '10px 0', fontSize: '1.1rem', borderRadius: '8px', border: '1px solid #ccc' }} />
-            <input name="email" placeholder="Email" value={form.email} onChange={handleChange} required style={{ width: '100%', padding: '12px', margin: '10px 0', fontSize: '1.1rem', borderRadius: '8px', border: '1px solid #ccc' }} />
+            <input name="phone" placeholder="WhatsApp Number" value={form.phone} onChange={handleChange} required style={{ width: '100%', padding: '12px', margin: '10px 0', fontSize: '1.1rem', borderRadius: '8px', border: '1px solid #ccc' }} />
+            <input name="email" placeholder="Email" type="email" value={form.email} onChange={handleChange} required style={{ width: '100%', padding: '12px', margin: '10px 0', fontSize: '1.1rem', borderRadius: '8px', border: '1px solid #ccc' }} />
             <input name="city" placeholder="City" value={form.city} onChange={handleChange} required style={{ width: '100%', padding: '12px', margin: '10px 0', fontSize: '1.1rem', borderRadius: '8px', border: '1px solid #ccc' }} />
             <button type="submit" style={{
               width: '100%',

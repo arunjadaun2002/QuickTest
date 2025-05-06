@@ -88,8 +88,8 @@ const QuizInfo = mongoose.model('QuizInfo', quizInfoSchema, 'QuizInfo');
 // Result model
 const resultSchema = new mongoose.Schema({
   name: { type: String, required: true },
-  email: { type: String, required: true },
   phone: { type: String, required: true },
+  email: { type: String, required: true },
   score: { type: Number, required: true },
   autoSubmitted: { type: Boolean, default: false },
   timestamp: { type: Date, default: Date.now }
@@ -124,12 +124,12 @@ app.post('/result', async (req, res) => {
   console.log('Received result request:', req.body);
   
   // Validate required fields
-  const { name, email, phone, score, autoSubmitted } = req.body;
-  if (!name || !email || !phone || score === undefined) {
-    console.error('Missing required fields:', { name, email, phone, score });
+  const { name, phone, email, score, autoSubmitted } = req.body;
+  if (!name || !phone || !email || score === undefined) {
+    console.error('Missing required fields:', { name, phone, email, score });
     return res.status(400).json({ 
       message: 'Missing required fields', 
-      details: { name, email, phone, score }
+      details: { name, phone, email, score }
     });
   }
 
@@ -147,7 +147,7 @@ app.post('/result', async (req, res) => {
     console.log('Current database:', mongoose.connection.name);
     console.log('Target collection:', Result.collection.name);
 
-    const result = new Result({ name, email, phone, score, autoSubmitted });
+    const result = new Result({ name, phone, email, score, autoSubmitted });
     const savedResult = await result.save();
     console.log('Successfully saved result to collection:', Result.collection.name);
     console.log('Saved result:', savedResult);
@@ -180,8 +180,8 @@ app.post('/test-db', async (req, res) => {
     // Create a test document
     const testDoc = new Result({
       name: 'Test User',
-      email: 'test@example.com',
       phone: '1234567890',
+      email: 'test@example.com',
       score: 100
     });
     
@@ -214,7 +214,6 @@ app.post('/insert-test', async (req, res) => {
   try {
     const testDoc = new Result({
       name: 'Test User',
-      email: 'test@example.com',
       phone: '1234567890',
       score: 100,
       timestamp: new Date()
