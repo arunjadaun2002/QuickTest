@@ -382,24 +382,27 @@ const Quiz = ({ studentName, studentEmail, studentPhone }) => {
               onClick={() => setShowFeedback(true)}
               style={{ padding: '12px 32px', borderRadius: 8, background: '#3b4cb8', color: '#fff', fontWeight: 700, fontSize: 18, border: 'none', marginTop: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.08)', cursor: 'pointer' }}
             >
-              Feedback
+              Submit Feedback
             </button>
           ) : (
             <div style={{ marginTop: 24, maxWidth: 400, marginLeft: 'auto', marginRight: 'auto', textAlign: 'left' }}>
-              <label style={{ fontWeight: 600, display: 'block', marginBottom: 8 }}>Subject:</label>
-              <input
-                type="text"
+              <label style={{ fontWeight: 600, display: 'block', marginBottom: 8 }}>Feedback Type:</label>
+              <select
                 value={feedbackSubject}
                 onChange={e => setFeedbackSubject(e.target.value)}
                 style={{ width: '100%', padding: 10, borderRadius: 6, border: '1px solid #ccc', marginBottom: 16, fontSize: 16 }}
-                placeholder="Enter subject"
-              />
-              <label style={{ fontWeight: 600, display: 'block', marginBottom: 8 }}>Problem Detail:</label>
+              >
+                <option value="">Select feedback type</option>
+                <option value="Bug Report">Bug Report</option>
+                <option value="Suggestion">Suggestion</option>
+                <option value="General Feedback">General Feedback</option>
+              </select>
+              <label style={{ fontWeight: 600, display: 'block', marginBottom: 8 }}>Suggestion / Problem Detail:</label>
               <textarea
                 value={feedbackDetail}
                 onChange={e => setFeedbackDetail(e.target.value)}
                 style={{ width: '100%', padding: 10, borderRadius: 6, border: '1px solid #ccc', minHeight: 80, fontSize: 16, marginBottom: 16 }}
-                placeholder="Describe your problem or feedback"
+                placeholder="Describe your suggestion, problem, or feedback"
               />
               {/* Rating Bar */}
               <div style={{ marginBottom: 18, textAlign: 'center' }}>

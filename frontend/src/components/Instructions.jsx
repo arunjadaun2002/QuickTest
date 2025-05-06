@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
 const Instructions = ({ onStartTest }) => {
   const [checked, setChecked] = useState(false);
@@ -183,7 +183,8 @@ const Instructions = ({ onStartTest }) => {
         borderRadius: 20, 
         boxShadow: '0 8px 32px rgba(0,0,0,0.08)', 
         padding: '3rem',
-        position: 'relative'
+        position: 'relative',
+        textAlign: 'left'
       }}>
         <h2 style={{ 
           color: '#2d3748', 
@@ -210,50 +211,31 @@ const Instructions = ({ onStartTest }) => {
         </div>
 
         <div style={{ 
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-          gap: '2rem',
           marginBottom: '2rem'
         }}>
-          <div>
-            <h3 style={{ 
-              color: '#2d3748', 
-              marginBottom: '1rem',
-              fontSize: '1.2rem',
-              fontWeight: 600
-            }}>General Instructions</h3>
-            <ol style={{ 
-              fontSize: '1.05rem', 
-              lineHeight: 1.8, 
-              color: '#4a5568',
-              paddingLeft: '1.5rem'
-            }}>
-              <li>Click Start Test On Bottom Of Your Screen To Begin The Test.</li>
-              <li>The Clock Has Been Set At Server And Count Down Timer At The Top Right Side Of The Screen Will Display Left Out Time To Closure.</li>
-              <li>Click One Of The Answer, Simply Click The Desired Option Button.</li>
-              <li>Candidate Can Change Their Response Of Attempted Answer Anytime During Examination Slot Time.</li>
-            </ol>
-          </div>
-
-          <div>
-            <h3 style={{ 
-              color: '#2d3748', 
-              marginBottom: '1rem',
-              fontSize: '1.2rem',
-              fontWeight: 600
-            }}>Navigation Instructions</h3>
-            <ol style={{ 
-              fontSize: '1.05rem', 
-              lineHeight: 1.8, 
-              color: '#4a5568',
-              paddingLeft: '1.5rem'
-            }}>
-              <li>Click On Next To Save The Answer And Moving To The Next Question.</li>
-              <li>Click On Mark For Review To Review Your Answer At Later Stage.</li>
-              <li>To Select A Question, Click On The Question Number On The Right Side.</li>
-              <li>Candidate Will Be Allowed To Shuffle Between Questions Anytime.</li>
-            </ol>
-          </div>
+          <h3 style={{ 
+            color: '#2d3748', 
+            marginBottom: '1rem',
+            fontSize: '1.2rem',
+            fontWeight: 600
+          }}>Instructions</h3>
+          <ol style={{ 
+            fontSize: '1.05rem', 
+            lineHeight: 1.8, 
+            color: '#4a5568',
+            paddingLeft: '1.5rem',
+            textAlign: 'left',
+            margin: 0
+          }}>
+            <li>Click start test on bottom of your screen to begin the test.</li>
+            <li>The clock has been set at server and count down timer at the top right side of the screen will display left out time to closure.</li>
+            <li>Click one of the answer, simply click the desired option button.</li>
+            <li>Candidate can change their response of attempted answer anytime during examination slot time.</li>
+            <li>Click on next to save the answer and move to the next question.</li>
+            <li>Click on mark for review to review your answer at a later stage.</li>
+            <li>To select a question, click on the question number on the right side.</li>
+            <li>Candidate will be allowed to shuffle between questions anytime.</li>
+          </ol>
         </div>
 
         {/* Legend */}
