@@ -12,7 +12,7 @@ app.use(bodyParser.json());
 app.use(express.json());
 
 // MongoDB Connection
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/quicktest';
+const MONGODB_URI = process.env.MONGODB_URI;
 mongoose.connect(MONGODB_URI)
   .then(() => console.log('MongoDB Connected'))
   .catch(err => console.log('MongoDB Connection Error:', err));
@@ -33,6 +33,7 @@ const QuizInfo = mongoose.model('QuizInfo', quizInfoSchema, 'QuizInfo');
 // Result model
 const resultSchema = new mongoose.Schema({
   name: { type: String, required: true },
+  email: { type: String, required: true },
   score: { type: Number, required: true },
 });
 const Result = mongoose.model('Result', resultSchema, 'result');
@@ -62,12 +63,15 @@ app.get('/quiz', async (req, res) => {
 
 // Endpoint to save result
 app.post('/result', async (req, res) => {
+  console.log('Received result:', req.body);
   try {
-    const { name, score } = req.body;
-    const result = new Result({ name, score });
+    const { name, email, score } = req.body;
+    const result = new Result({ name, email, score });
     await result.save();
+    console.log('Saved result:', result);
     res.status(201).json({ message: 'Result saved successfully' });
   } catch (error) {
+    console.error('Error saving result:', error);
     res.status(500).json({ message: 'Failed to save result', error: error.message });
   }
 });

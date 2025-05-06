@@ -1,13 +1,16 @@
 import axios from 'axios';
 import React, { useState } from 'react';
+import Instructions from './Instructions';
 import Quiz from './Quiz';
 
 const Registration = () => {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name: '', phone: '', email: '', city: '' });
   const [message, setMessage] = useState('');
+  const [showInstructions, setShowInstructions] = useState(false);
   const [showQuiz, setShowQuiz] = useState(false);
   const [studentName, setStudentName] = useState('');
+  const [studentEmail, setStudentEmail] = useState('');
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -21,16 +24,19 @@ const Registration = () => {
       setShowForm(false);
       setForm({ name: '', phone: '', email: '', city: '' });
       setStudentName(form.name);
-      setShowQuiz(true);
+      setStudentEmail(form.email);
+      setShowInstructions(true);
     } catch (error) {
       setMessage(error.response?.data?.message || 'Registration failed');
     }
   };
 
-  if (showQuiz) return <Quiz studentName={studentName} />;
+  if (showQuiz) return <Quiz studentName={studentName} studentEmail={studentEmail} />;
+  if (showInstructions) return <Instructions onStartTest={() => setShowQuiz(true)} />;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '80vh' }}>
+      <h1 style={{ fontSize: '2.5rem', fontWeight: 700, color: '#4e54c8', marginBottom: '2.5rem', letterSpacing: '1px' }}>PPMET Mock Test Registration</h1>
       <button
         onClick={() => setShowForm(true)}
         style={{

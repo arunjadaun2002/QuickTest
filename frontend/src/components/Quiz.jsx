@@ -8,7 +8,9 @@ const paletteColors = {
   review: '#ff9800',
 };
 
-const Quiz = ({ studentName }) => {
+const indexToLetter = (idx) => String.fromCharCode(65 + idx); // 0 -> 'A', 1 -> 'B', etc.
+
+const Quiz = ({ studentName, studentEmail }) => {
   const [quiz, setQuiz] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -21,7 +23,29 @@ const Quiz = ({ studentName }) => {
   const [warnings, setWarnings] = useState(0);
   const [showWarning, setShowWarning] = useState(false);
   const [resultSaved, setResultSaved] = useState(false);
+  const [autoSubmitted, setAutoSubmitted] = useState(false);
   const timerRef = useRef();
+  const resultRef = useRef(null);
+
+  const handleSubmit = async () => {
+    setSubmitted(true);
+    clearInterval(timerRef.current);
+    const name = studentName;
+    const email = studentEmail;
+    // Calculate score: 1 mark per correct answer (by letter, case-insensitive)
+    let score = 0;
+    questions.forEach((q, idx) => {
+      if ((answers[idx] || '').trim().toUpperCase() === (q.answer || '').trim().toUpperCase()) score += 1;
+    });
+    if (name && email && score >= 0) {
+      try {
+        await axios.post('http://localhost:5000/result', { name, email, score });
+        setResultSaved(true);
+      } catch (e) {
+        setResultSaved(false);
+      }
+    }
+  };
 
   useEffect(() => {
     const fetchQuiz = async () => {
@@ -66,7 +90,11 @@ const Quiz = ({ studentName }) => {
           if (w < 1) setShowWarning(true);
           if (w + 1 >= 2) {
             setShowWarning(false);
+            setAutoSubmitted(true);
             handleSubmit();
+            setTimeout(() => {
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }, 300);
           }
           return w + 1;
         });
@@ -88,6 +116,12 @@ const Quiz = ({ studentName }) => {
     };
   }, []);
 
+  useEffect(() => {
+    if (submitted && autoSubmitted && resultRef.current) {
+      resultRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [submitted, autoSubmitted]);
+
   if (loading) return <div>Loading quiz...</div>;
   if (error) return <div>{error}</div>;
   if (!quiz) return <div>No quiz found.</div>;
@@ -103,8 +137,8 @@ const Quiz = ({ studentName }) => {
     );
   }
 
-  const handleOptionChange = (option) => {
-    setAnswers({ ...answers, [current]: option });
+  const handleOptionChange = (letter) => {
+    setAnswers({ ...answers, [current]: letter });
   };
 
   const handleMarkForReview = () => {
@@ -137,41 +171,22 @@ const Quiz = ({ studentName }) => {
 
   const formatTime = (t) => `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`;
 
-  const handleSubmit = async () => {
-    setSubmitted(true);
-    clearInterval(timerRef.current);
-    // Use the studentName prop
-    const name = studentName;
-    // Calculate score: 1 mark per correct answer
-    let score = 0;
-    questions.forEach((q, idx) => {
-      if (answers[idx] === q.answer) score += 1;
-    });
-    if (name && score >= 0) {
-      try {
-        await axios.post('http://localhost:5000/result', { name, score });
-        setResultSaved(true);
-      } catch (e) {
-        setResultSaved(false);
-      }
-    }
-  };
-
   if (submitted) {
     let score = 0;
     questions.forEach((q, idx) => {
-      if (answers[idx] === q.answer) score += 1;
+      if ((answers[idx] || '').trim().toUpperCase() === (q.answer || '').trim().toUpperCase()) score += 1;
     });
     return (
-      <div style={{ maxWidth: 900, margin: '2rem auto', background: '#fff', borderRadius: 12, boxShadow: '0 2px 16px rgba(0,0,0,0.08)', padding: '2rem' }}>
+      <div ref={resultRef} style={{ maxWidth: 900, margin: '2rem auto', background: '#fff', borderRadius: 12, boxShadow: '0 2px 16px rgba(0,0,0,0.08)', padding: '2rem' }}>
         <h2 style={{ color: '#185a9d', marginBottom: '1.5rem' }}>Quiz Results</h2>
+        {autoSubmitted && <div style={{ color: '#d7263d', fontWeight: 700, marginBottom: 16 }}>Test auto-submitted due to exceeding tab switch limit.</div>}
         <div style={{ marginBottom: 24, fontSize: 18 }}>
           <b>Score: {score} / {questions.length}</b>
         </div>
         {resultSaved && <div style={{ color: '#388e3c', marginBottom: 16 }}>Your result has been saved!</div>}
         {!resultSaved && <div style={{ color: '#d7263d', marginBottom: 16 }}>Result not saved or server error.</div>}
         {questions.map((q, idx) => {
-          const isCorrect = answers[idx] === q.answer;
+          const isCorrect = (answers[idx] || '').trim().toUpperCase() === (q.answer || '').trim().toUpperCase();
           return (
             <div key={idx} style={{ marginBottom: 24, padding: 16, borderRadius: 8, background: isCorrect ? '#e8f5e9' : '#ffebee', border: isCorrect ? '1px solid #4caf50' : '1px solid #f44336' }}>
               <div style={{ fontWeight: 600, marginBottom: 8 }}>Q{idx + 1}: {q.question}</div>
@@ -190,33 +205,36 @@ const Quiz = ({ studentName }) => {
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#f8f8f8' }}>
       {/* Main Question Panel */}
-      <div style={{ flex: 2, padding: '2rem', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-        <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 2px 16px rgba(0,0,0,0.08)', padding: '2.5rem 2rem', margin: 'auto', maxWidth: 700 }}>
+      <div style={{ flex: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', minHeight: '100vh', paddingTop: '4vh' }}>
+        <div style={{ background: '#fff', borderRadius: 18, boxShadow: '0 8px 32px rgba(80,80,160,0.10)', padding: '2.5rem 2rem', margin: '0 auto', maxWidth: 700, width: '100%', marginTop: '2vh', marginBottom: '2vh', border: '1.5px solid #e0e0e0' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-            <div style={{ fontWeight: 700, fontSize: 20 }}>Question {current + 1}</div>
+            <div style={{ fontWeight: 700, fontSize: 22 }}>Question {current + 1}</div>
             <div style={{ fontSize: 15, color: '#888' }}>Marks For Correct Response: 1.00 | Negative Marking: 0.00</div>
           </div>
-          <div style={{ fontWeight: 600, marginBottom: 16, fontSize: 18 }}>{q.question}</div>
+          <div style={{ fontWeight: 700, marginBottom: 24, fontSize: 20, color: '#222' }}>{q.question}</div>
           <div>
-            {q.options.map((opt, oidx) => (
-              <label key={oidx} style={{ display: 'block', marginBottom: 12, fontSize: '1.15rem', borderRadius: 6, padding: '8px 12px', background: answers[current] === opt ? '#e3f2fd' : '#fafafa', border: answers[current] === opt ? '1.5px solid #2196f3' : '1px solid #ccc', cursor: 'pointer' }}>
-                <input
-                  type="radio"
-                  name={`q${current}`}
-                  value={opt}
-                  checked={answers[current] === opt}
-                  onChange={() => handleOptionChange(opt)}
-                  style={{ marginRight: 10 }}
-                />
-                {opt}
-              </label>
-            ))}
+            {q.options.map((opt, oidx) => {
+              const letter = indexToLetter(oidx);
+              return (
+                <label key={oidx} style={{ display: 'block', marginBottom: 18, fontSize: '1.18rem', borderRadius: 8, padding: '12px 16px', background: answers[current] === letter ? '#e3f2fd' : '#fafafa', border: answers[current] === letter ? '2px solid #4e54c8' : '1.5px solid #e0e0e0', cursor: 'pointer', transition: 'all 0.2s', fontWeight: answers[current] === letter ? 700 : 500, color: answers[current] === letter ? '#222' : '#444' }}>
+                  <input
+                    type="radio"
+                    name={`q${current}`}
+                    value={letter}
+                    checked={answers[current] === letter}
+                    onChange={() => handleOptionChange(letter)}
+                    style={{ marginRight: 14 }}
+                  />
+                  <b>{letter}.</b> {opt}
+                </label>
+              );
+            })}
           </div>
-          <div style={{ marginTop: 32, display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-            <button onClick={handleMarkForReview} style={{ padding: '12px 24px', borderRadius: 8, background: paletteColors.review, color: '#fff', border: 'none', fontWeight: 700, fontSize: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>Mark For Review & Next</button>
-            <button onClick={handleClear} style={{ padding: '12px 24px', borderRadius: 8, background: '#eee', color: '#333', border: 'none', fontWeight: 700, fontSize: 16 }}>Clear Response</button>
-            <button onClick={handlePrev} disabled={current === 0} style={{ padding: '12px 24px', borderRadius: 8, background: '#2196f3', color: '#fff', border: 'none', fontWeight: 700, fontSize: 16, opacity: current === 0 ? 0.5 : 1 }}>Previous</button>
-            <button onClick={handleNext} disabled={current === questions.length - 1} style={{ padding: '12px 24px', borderRadius: 8, background: '#2196f3', color: '#fff', border: 'none', fontWeight: 700, fontSize: 16, opacity: current === questions.length - 1 ? 0.5 : 1 }}>Save & Next</button>
+          <div style={{ marginTop: 36, display: 'flex', gap: 18, flexWrap: 'wrap', justifyContent: 'center' }}>
+            <button onClick={handleMarkForReview} style={{ padding: '12px 28px', borderRadius: 8, background: paletteColors.review, color: '#fff', border: 'none', fontWeight: 700, fontSize: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>Mark For Review & Next</button>
+            <button onClick={handleClear} style={{ padding: '12px 28px', borderRadius: 8, background: '#eee', color: '#333', border: 'none', fontWeight: 700, fontSize: 16 }}>Clear Response</button>
+            <button onClick={handlePrev} disabled={current === 0} style={{ padding: '12px 28px', borderRadius: 8, background: '#2196f3', color: '#fff', border: 'none', fontWeight: 700, fontSize: 16, opacity: current === 0 ? 0.5 : 1 }}>Previous</button>
+            <button onClick={handleNext} disabled={current === questions.length - 1} style={{ padding: '12px 28px', borderRadius: 8, background: '#2196f3', color: '#fff', border: 'none', fontWeight: 700, fontSize: 16, opacity: current === questions.length - 1 ? 0.5 : 1 }}>Save & Next</button>
           </div>
           {showWarning && (
             <div style={{ marginTop: 24, color: '#d7263d', fontWeight: 700, fontSize: 18, background: '#fff3e0', padding: 16, borderRadius: 8, border: '1px solid #ff9800' }}>
