@@ -227,6 +227,8 @@ const Instructions = ({ onStartTest }) => {
             textAlign: 'left',
             margin: 0
           }}>
+            <li>Each question carries 4 marks and No negative marking.</li>
+            <li>Submit Button is below the Question List.</li>
             <li>Click start test on bottom of your screen to begin the test.</li>
             <li>The clock has been set at server and count down timer at the top right side of the screen will display left out time to closure.</li>
             <li>Click one of the answer, simply click the desired option button.</li>

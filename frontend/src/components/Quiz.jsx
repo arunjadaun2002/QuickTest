@@ -63,10 +63,10 @@ const Quiz = ({ studentName, studentEmail, studentPhone }) => {
     const email = studentEmail;
     const phone = studentPhone;
     
-    // Calculate score: 1 mark per correct answer (by letter, case-insensitive)
+    // Calculate score: 4 marks per correct answer (by letter, case-insensitive)
     let score = 0;
     questions.forEach((q, idx) => {
-      if ((answers[idx] || '').trim().toUpperCase() === (q.answer || '').trim().toUpperCase()) score += 1;
+      if ((answers[idx] || '').trim().toUpperCase() === (q.answer || '').trim().toUpperCase()) score += 4;
     });
 
     console.log('Submitting result with data:', { name, email, phone, score, autoSubmitted: isAuto });
@@ -336,7 +336,7 @@ const Quiz = ({ studentName, studentEmail, studentPhone }) => {
   if (submitted) {
     let score = 0;
     questions.forEach((q, idx) => {
-      if ((answers[idx] || '').trim().toUpperCase() === (q.answer || '').trim().toUpperCase()) score += 1;
+      if ((answers[idx] || '').trim().toUpperCase() === (q.answer || '').trim().toUpperCase()) score += 4;
     });
     return (
       <div ref={resultRef} style={{ maxWidth: 900, margin: '2rem auto', background: '#fff', borderRadius: 12, boxShadow: '0 2px 16px rgba(0,0,0,0.08)', padding: '2rem' }}>
@@ -506,10 +506,14 @@ const Quiz = ({ studentName, studentEmail, studentPhone }) => {
         <div style={{ flex: 2.5, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', minHeight: '100vh', padding: isMobile ? '2vw 0 0 0' : '2.5vw 0 0 0', width: '100%' }}>
           <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 4px 24px rgba(80,80,160,0.10)', padding: isMobile ? '1.2rem 0.5rem' : '2.5rem 2rem', margin: '0 auto', maxWidth: 800, width: '100%', border: '1.5px solid #e0e0e0' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
-              <div style={{ fontWeight: 700, fontSize: 20 }}>Question {current + 1}</div>
-              <div style={{ fontSize: 15, color: '#444' }}>Marks For Correct Response: <b>1.00</b> | Negative Marking: <b>0.00</b></div>
+              <div style={{ fontWeight: 700, fontSize: 20, textAlign: 'center', marginBottom: 32 }}>
+                Question {current + 1}
+              </div>
             </div>
-            <div style={{ fontWeight: 600, marginBottom: 22, fontSize: 18, color: '#222' }}>{q.question}</div>
+            <div style={{ textAlign: 'center', fontSize: 16, color: '#444', marginBottom: 10 }}>
+              
+            </div>
+            <div style={{ fontWeight: 600, marginBottom: 22, fontSize: 18, color: '#222', textAlign: 'center' }}>{q.question}</div>
             <div style={{ marginBottom: 30 }}>
               {q.options.map((opt, oidx) => {
                 const letter = indexToLetter(oidx);
@@ -589,7 +593,7 @@ const Quiz = ({ studentName, studentEmail, studentPhone }) => {
           )}
           {showSidebar && (
             <>
-              <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 10, textAlign: 'center' }}>Test Instructions:</div>
+              <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 10, textAlign: 'center' }}>Question list</div>
               <div style={{ marginBottom: 16, fontSize: 15, color: '#444', textAlign: 'center' }}>Remaining Time: <b>{formatTime(timeLeft)}</b></div>
               <div style={{ fontWeight: 600, marginBottom: 10, fontSize: 16, textAlign: 'center' }}>Choose a Question</div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 36px)', gap: 8, marginBottom: 24, justifyContent: 'center' }}>
