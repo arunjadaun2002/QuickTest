@@ -20,7 +20,7 @@ const Registration = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post('http://localhost:5000/register', form);
+      const res = await axios.post('https://quicktest-backend.onrender.com/register', form);
       setMessage(res.data.message);
       setShowForm(false);
       setForm({ name: '', phone: '', email: '', city: '' });

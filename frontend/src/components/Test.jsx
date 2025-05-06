@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const Test = () => {
@@ -72,7 +72,7 @@ const Test = () => {
     // Fetch questions from backend
     const fetchQuestions = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/questions');
+        const response = await axios.get('https://quicktest-backend.onrender.com/api/questions');
         setQuestions(response.data);
         // Initialize answers object
         const initialAnswers = {};
@@ -112,7 +112,7 @@ const Test = () => {
 
   const handleSubmit = async () => {
     try {
-      const response = await axios.post('http://localhost:5000/api/submit-test', {
+      const response = await axios.post('https://quicktest-backend.onrender.com/api/submit-test', {
         answers,
         timeTaken: 10800 - timeLeft,
         userId: localStorage.getItem('userId') // Assuming you store userId after login

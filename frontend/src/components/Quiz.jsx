@@ -54,7 +54,7 @@ const Quiz = ({ studentName, studentEmail, studentPhone }) => {
     });
     if (name && email && phone && score >= 0) {
       try {
-        await axios.post('http://localhost:5000/result', { name, email, phone, score });
+        await axios.post('https://quicktest-backend.onrender.com/result', { name, email, phone, score });
         setResultSaved(true);
       } catch (e) {
         setResultSaved(false);
@@ -65,7 +65,7 @@ const Quiz = ({ studentName, studentEmail, studentPhone }) => {
   useEffect(() => {
     const fetchQuiz = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/quiz');
+        const res = await axios.get('https://quicktest-backend.onrender.com/quiz');
         setQuiz(res.data);
         setCurrent(0); // Reset to first question on new quiz load
         console.log('Quiz object:', res.data);
