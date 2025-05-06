@@ -24,7 +24,18 @@ const studentInfoSchema = new mongoose.Schema({
   email: { type: String, required: true },
   city: { type: String, required: true },
 });
-const StudentInfo = mongoose.model('StudentInfo', studentInfoSchema);
+const StudentInfo = mongoose.model('StudentInfo', studentInfoSchema, 'StudentInfo');
+
+// QuizInfo model
+const quizInfoSchema = new mongoose.Schema({}, { strict: false });
+const QuizInfo = mongoose.model('QuizInfo', quizInfoSchema, 'QuizInfo');
+
+// Result model
+const resultSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  score: { type: Number, required: true },
+});
+const Result = mongoose.model('Result', resultSchema, 'result');
 
 // Registration endpoint
 app.post('/register', async (req, res) => {
@@ -35,6 +46,29 @@ app.post('/register', async (req, res) => {
     res.status(201).json({ message: 'Registration successful' });
   } catch (error) {
     res.status(500).json({ message: 'Registration failed', error: error.message });
+  }
+});
+
+// Endpoint to fetch the quiz
+app.get('/quiz', async (req, res) => {
+  try {
+    const quiz = await QuizInfo.findOne();
+    if (!quiz) return res.status(404).json({ message: 'No quiz found' });
+    res.json(quiz);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch quiz', error: error.message });
+  }
+});
+
+// Endpoint to save result
+app.post('/result', async (req, res) => {
+  try {
+    const { name, score } = req.body;
+    const result = new Result({ name, score });
+    await result.save();
+    res.status(201).json({ message: 'Result saved successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to save result', error: error.message });
   }
 });
 

@@ -1,10 +1,13 @@
 import axios from 'axios';
 import React, { useState } from 'react';
+import Quiz from './Quiz';
 
 const Registration = () => {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name: '', phone: '', email: '', city: '' });
   const [message, setMessage] = useState('');
+  const [showQuiz, setShowQuiz] = useState(false);
+  const [studentName, setStudentName] = useState('');
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -17,10 +20,14 @@ const Registration = () => {
       setMessage(res.data.message);
       setShowForm(false);
       setForm({ name: '', phone: '', email: '', city: '' });
+      setStudentName(form.name);
+      setShowQuiz(true);
     } catch (error) {
       setMessage(error.response?.data?.message || 'Registration failed');
     }
   };
+
+  if (showQuiz) return <Quiz studentName={studentName} />;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '80vh' }}>
