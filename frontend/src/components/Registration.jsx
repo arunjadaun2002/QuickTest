@@ -11,6 +11,7 @@ const Registration = () => {
   const [showQuiz, setShowQuiz] = useState(false);
   const [studentName, setStudentName] = useState('');
   const [studentEmail, setStudentEmail] = useState('');
+  const [studentPhone, setStudentPhone] = useState('');
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -25,13 +26,14 @@ const Registration = () => {
       setForm({ name: '', phone: '', email: '', city: '' });
       setStudentName(form.name);
       setStudentEmail(form.email);
+      setStudentPhone(form.phone);
       setShowInstructions(true);
     } catch (error) {
       setMessage(error.response?.data?.message || 'Registration failed');
     }
   };
 
-  if (showQuiz) return <Quiz studentName={studentName} studentEmail={studentEmail} />;
+  if (showQuiz) return <Quiz studentName={studentName} studentEmail={studentEmail} studentPhone={studentPhone} />;
   if (showInstructions) return <Instructions onStartTest={() => setShowQuiz(true)} />;
 
   return (

@@ -10,7 +10,7 @@ const paletteColors = {
 
 const indexToLetter = (idx) => String.fromCharCode(65 + idx); // 0 -> 'A', 1 -> 'B', etc.
 
-const Quiz = ({ studentName, studentEmail }) => {
+const Quiz = ({ studentName, studentEmail, studentPhone }) => {
   const [quiz, setQuiz] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -32,14 +32,15 @@ const Quiz = ({ studentName, studentEmail }) => {
     clearInterval(timerRef.current);
     const name = studentName;
     const email = studentEmail;
+    const phone = studentPhone;
     // Calculate score: 1 mark per correct answer (by letter, case-insensitive)
     let score = 0;
     questions.forEach((q, idx) => {
       if ((answers[idx] || '').trim().toUpperCase() === (q.answer || '').trim().toUpperCase()) score += 1;
     });
-    if (name && email && score >= 0) {
+    if (name && email && phone && score >= 0) {
       try {
-        await axios.post('http://localhost:5000/result', { name, email, score });
+        await axios.post('http://localhost:5000/result', { name, email, phone, score });
         setResultSaved(true);
       } catch (e) {
         setResultSaved(false);
