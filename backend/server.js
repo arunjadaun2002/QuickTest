@@ -34,6 +34,7 @@ const QuizInfo = mongoose.model('QuizInfo', quizInfoSchema, 'QuizInfo');
 const resultSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true },
+  phone: { type: String, required: true },
   score: { type: Number, required: true },
 });
 const Result = mongoose.model('Result', resultSchema, 'result');
@@ -65,8 +66,8 @@ app.get('/quiz', async (req, res) => {
 app.post('/result', async (req, res) => {
   console.log('Received result:', req.body);
   try {
-    const { name, email, score } = req.body;
-    const result = new Result({ name, email, score });
+    const { name, email, phone, score } = req.body;
+    const result = new Result({ name, email, phone, score });
     await result.save();
     console.log('Saved result:', result);
     res.status(201).json({ message: 'Result saved successfully' });
