@@ -328,11 +328,14 @@ const Quiz = ({ studentName, studentEmail, studentPhone }) => {
         {!resultSaved && <div style={{ color: '#d7263d', marginBottom: 16 }}>Result not saved or server error.</div>}
         {questions.map((q, idx) => {
           const isCorrect = (answers[idx] || '').trim().toUpperCase() === (q.answer || '').trim().toUpperCase();
+          // Get the correct answer text
+          const correctIdx = (q.answer || '').toUpperCase().charCodeAt(0) - 65;
+          const correctText = q.options && correctIdx >= 0 && correctIdx < q.options.length ? q.options[correctIdx] : q.answer;
           return (
             <div key={idx} style={{ marginBottom: 24, padding: 16, borderRadius: 8, background: isCorrect ? '#e8f5e9' : '#ffebee', border: isCorrect ? '1px solid #4caf50' : '1px solid #f44336' }}>
               <div style={{ fontWeight: 600, marginBottom: 8 }}>Q{idx + 1}: {q.question}</div>
               <div>Your answer: <b style={{ color: isCorrect ? '#388e3c' : '#d32f2f' }}>{answers[idx] || 'No answer'}</b></div>
-              <div>Correct answer: <b style={{ color: '#388e3c' }}>{q.answer}</b></div>
+              <div>Correct answer: <b style={{ color: '#388e3c' }}>{correctText}</b><span style={{ color: '#888', marginLeft: 8, fontWeight: 400 }}>({q.answer})</span></div>
             </div>
           );
         })}
