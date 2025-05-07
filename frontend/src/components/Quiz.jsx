@@ -42,11 +42,13 @@ const Quiz = ({ studentName, studentEmail, studentPhone }) => {
 
   const questions = quiz?.questions || [];
 
-  const handleSubmit = async (isAuto = false) => {
+  const handleSubmit = async (isAuto = false, preCalculatedScore = null) => {
+    // Prevent multiple submissions
+    if (submitted) return;
+    
     setSubmitted(true);
     clearInterval(timerRef.current);
     
-    // Exit fullscreen mode when submitting
     try {
       if (document.exitFullscreen) {
         document.exitFullscreen();
@@ -63,13 +65,20 @@ const Quiz = ({ studentName, studentEmail, studentPhone }) => {
     const email = studentEmail;
     const phone = studentPhone;
     
-    // Calculate score: 4 marks per correct answer (by letter, case-insensitive)
-    let score = 0;
-    questions.forEach((q, idx) => {
-      if ((answers[idx] || '').trim().toUpperCase() === (q.answer || '').trim().toUpperCase()) score += 4;
-    });
+    // Use preCalculatedScore if provided (for auto-submission), otherwise calculate
+    let score = preCalculatedScore;
+    if (score === null) {
+      score = 0;
+      for (let idx = 0; idx < questions.length; idx++) {
+        const userAnswer = (answers[idx] || '').trim().toUpperCase();
+        const correctAnswer = (questions[idx].answer || '').trim().toUpperCase();
+        if (userAnswer === correctAnswer) {
+          score += 4;
+        }
+      }
+    }
 
-    console.log('Submitting result with data:', { name, email, phone, score, autoSubmitted: isAuto });
+    console.log('Submitting with score:', score, 'Auto-submitted:', isAuto);
 
     if (!name || !email || !phone) {
       console.error('Missing required fields:', { name, email, phone });
@@ -77,18 +86,25 @@ const Quiz = ({ studentName, studentEmail, studentPhone }) => {
       return;
     }
 
-    if (score < 0) {
-      console.error('Invalid score:', score);
-      setError('Invalid score calculated');
-      return;
-    }
-
     try {
-      const response = await axios.post('https://quicktest-backend.onrender.com/result', 
-        { name, email, phone, score, autoSubmitted: isAuto }
-      );
+      const submissionData = {
+        name,
+        email,
+        phone,
+        score: score, // Ensure score is explicitly set
+        autoSubmitted: isAuto,
+        totalQuestions: questions.length,
+        submissionTime: new Date().toISOString()
+      };
+
+      console.log('Sending submission data:', submissionData);
+
+      const response = await axios.post('https://quicktest-backend.onrender.com/result', submissionData);
       console.log('Result saved successfully:', response.data);
       setResultSaved(true);
+      if (isAuto) {
+        setAutoSubmitted(true);
+      }
     } catch (error) {
       console.error('Error saving result:', error.response?.data || error.message);
       setError('Failed to save result. Please try again.');
@@ -138,15 +154,23 @@ const Quiz = ({ studentName, studentEmail, studentPhone }) => {
         setWarnings((w) => {
           const newWarnings = w + 1;
           if (newWarnings >= 3) {
+            // Calculate score before auto-submission
+            let autoSubmitScore = 0;
+            for (let idx = 0; idx < questions.length; idx++) {
+              const userAnswer = (answers[idx] || '').trim().toUpperCase();
+              const correctAnswer = (questions[idx].answer || '').trim().toUpperCase();
+              if (userAnswer === correctAnswer) {
+                autoSubmitScore += 4;
+              }
+            }
+            console.log('Tab switch violation auto-submission score:', autoSubmitScore);
             setAutoSubmitted(true);
-            handleSubmit(true);
+            handleSubmit(true, autoSubmitScore);
           } else {
             setShowWarning(true);
-            // Clear any existing timeout
             if (warningTimeoutRef.current) {
               clearTimeout(warningTimeoutRef.current);
             }
-            // Set new timeout
             warningTimeoutRef.current = setTimeout(() => {
               setShowWarning(false);
             }, 3000);
@@ -163,7 +187,7 @@ const Quiz = ({ studentName, studentEmail, studentPhone }) => {
         clearTimeout(warningTimeoutRef.current);
       }
     };
-  }, [submitted]);
+  }, [submitted, questions, answers]);
 
   useEffect(() => {
     const prevent = (e) => e.preventDefault();
@@ -198,7 +222,17 @@ const Quiz = ({ studentName, studentEmail, studentPhone }) => {
         setSecurityViolations(prev => {
           const newViolations = prev + 1;
           if (newViolations >= MAX_VIOLATIONS) {
-            handleSubmit(true);
+            // Calculate score before auto-submission
+            let autoSubmitScore = 0;
+            for (let idx = 0; idx < questions.length; idx++) {
+              const userAnswer = (answers[idx] || '').trim().toUpperCase();
+              const correctAnswer = (questions[idx].answer || '').trim().toUpperCase();
+              if (userAnswer === correctAnswer) {
+                autoSubmitScore += 4;
+              }
+            }
+            console.log('Security violation auto-submission score:', autoSubmitScore);
+            handleSubmit(true, autoSubmitScore);
           }
           return newViolations;
         });
@@ -220,7 +254,7 @@ const Quiz = ({ studentName, studentEmail, studentPhone }) => {
       document.removeEventListener('mozfullscreenchange', checkFullScreen);
       document.removeEventListener('MSFullscreenChange', checkFullScreen);
     };
-  }, [submitted]);
+  }, [submitted, questions, answers, MAX_VIOLATIONS]);
 
   // Prevent keyboard shortcuts
   useEffect(() => {
@@ -239,7 +273,17 @@ const Quiz = ({ studentName, studentEmail, studentPhone }) => {
         setSecurityViolations(prev => {
           const newViolations = prev + 1;
           if (newViolations >= MAX_VIOLATIONS) {
-            handleSubmit(true);
+            // Calculate score before auto-submission
+            let autoSubmitScore = 0;
+            for (let idx = 0; idx < questions.length; idx++) {
+              const userAnswer = (answers[idx] || '').trim().toUpperCase();
+              const correctAnswer = (questions[idx].answer || '').trim().toUpperCase();
+              if (userAnswer === correctAnswer) {
+                autoSubmitScore += 4;
+              }
+            }
+            console.log('Keyboard shortcut violation auto-submission score:', autoSubmitScore);
+            handleSubmit(true, autoSubmitScore);
           }
           return newViolations;
         });
@@ -248,7 +292,7 @@ const Quiz = ({ studentName, studentEmail, studentPhone }) => {
 
     document.addEventListener('keydown', preventShortcuts);
     return () => document.removeEventListener('keydown', preventShortcuts);
-  }, []);
+  }, [submitted, questions, answers, MAX_VIOLATIONS]);
 
   // Prevent right-click
   useEffect(() => {
@@ -257,7 +301,17 @@ const Quiz = ({ studentName, studentEmail, studentPhone }) => {
       setSecurityViolations(prev => {
         const newViolations = prev + 1;
         if (newViolations >= MAX_VIOLATIONS) {
-          handleSubmit(true);
+          // Calculate score before auto-submission
+          let autoSubmitScore = 0;
+          for (let idx = 0; idx < questions.length; idx++) {
+            const userAnswer = (answers[idx] || '').trim().toUpperCase();
+            const correctAnswer = (questions[idx].answer || '').trim().toUpperCase();
+            if (userAnswer === correctAnswer) {
+              autoSubmitScore += 4;
+            }
+          }
+          console.log('Context menu violation auto-submission score:', autoSubmitScore);
+          handleSubmit(true, autoSubmitScore);
         }
         return newViolations;
       });
@@ -265,25 +319,7 @@ const Quiz = ({ studentName, studentEmail, studentPhone }) => {
 
     document.addEventListener('contextmenu', preventContextMenu);
     return () => document.removeEventListener('contextmenu', preventContextMenu);
-  }, []);
-
-  // Prevent tab switching
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.hidden && !submitted) {
-        setSecurityViolations(prev => {
-          const newViolations = prev + 1;
-          if (newViolations >= MAX_VIOLATIONS) {
-            handleSubmit(true);
-          }
-          return newViolations;
-        });
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [submitted]);
+  }, [submitted, questions, answers, MAX_VIOLATIONS]);
 
   if (loading) return <div>Loading quiz...</div>;
   if (error) return <div>{error}</div>;
