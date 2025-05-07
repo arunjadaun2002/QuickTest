@@ -532,11 +532,31 @@ const Quiz = ({ studentName, studentEmail, studentPhone }) => {
                 );
               })}
             </div>
-            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', justifyContent: 'center', marginTop: 18 }}>
-              <button onClick={handleMarkForReview} style={{ padding: '10px 22px', borderRadius: 8, background: paletteColors.review, color: '#fff', border: 'none', fontWeight: 700, fontSize: 15, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>Mark For Review & Next</button>
-              <button onClick={handleClear} style={{ padding: '10px 22px', borderRadius: 8, background: '#eee', color: '#333', border: 'none', fontWeight: 700, fontSize: 15 }}>Clear Response</button>
-              <button onClick={handlePrev} disabled={current === 0} style={{ padding: '10px 22px', borderRadius: 8, background: '#2196f3', color: '#fff', border: 'none', fontWeight: 700, fontSize: 15, opacity: current === 0 ? 0.5 : 1 }}>Previous</button>
-              <button onClick={handleNext} disabled={current === questions.length - 1} style={{ padding: '10px 22px', borderRadius: 8, background: '#2196f3', color: '#fff', border: 'none', fontWeight: 700, fontSize: 15, opacity: current === questions.length - 1 ? 0.5 : 1 }}>Save & Next</button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'center', marginTop: 18 }}>
+              <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', justifyContent: 'center' }}>
+                <button onClick={handleMarkForReview} style={{ padding: '10px 22px', borderRadius: 8, background: paletteColors.review, color: '#fff', border: 'none', fontWeight: 700, fontSize: 15, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>Mark For Review & Next</button>
+                <button onClick={handleClear} style={{ padding: '10px 22px', borderRadius: 8, background: '#eee', color: '#333', border: 'none', fontWeight: 700, fontSize: 15 }}>Clear Response</button>
+                <button onClick={handlePrev} disabled={current === 0} style={{ padding: '10px 22px', borderRadius: 8, background: '#2196f3', color: '#fff', border: 'none', fontWeight: 700, fontSize: 15, opacity: current === 0 ? 0.5 : 1 }}>Previous</button>
+                <button onClick={handleNext} disabled={current === questions.length - 1} style={{ padding: '10px 22px', borderRadius: 8, background: '#2196f3', color: '#fff', border: 'none', fontWeight: 700, fontSize: 15, opacity: current === questions.length - 1 ? 0.5 : 1 }}>Save & Next</button>
+              </div>
+              <button 
+                onClick={() => handleSubmit()} 
+                style={{ 
+                  padding: '12px 40px', 
+                  borderRadius: 8, 
+                  background: '#3b4cb8', 
+                  color: '#fff', 
+                  fontWeight: 700, 
+                  fontSize: 16, 
+                  border: 'none', 
+                  marginTop: 16,
+                  width: '200px',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                  cursor: 'pointer'
+                }}
+              >
+                Submit Test
+              </button>
             </div>
           </div>
         </div>
@@ -626,7 +646,6 @@ const Quiz = ({ studentName, studentEmail, studentPhone }) => {
                   );
                 })}
               </div>
-              <button onClick={() => handleSubmit()} style={{ padding: '14px 40px', borderRadius: 8, background: '#3b4cb8', color: '#fff', fontWeight: 700, fontSize: 18, border: 'none', marginTop: 16, width: '100%', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>Submit</button>
             </>
           )}
         </div>
