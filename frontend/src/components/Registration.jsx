@@ -13,6 +13,7 @@ const Registration = () => {
   const [studentPhone, setStudentPhone] = useState('');
   const [studentEmail, setStudentEmail] = useState('');
   const [showWelcome, setShowWelcome] = useState(true);
+  const [preFetchedQuestions, setPreFetchedQuestions] = useState(null);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -34,8 +35,28 @@ const Registration = () => {
     }
   };
 
-  if (showQuiz) return <Quiz studentName={studentName} studentEmail={studentEmail} studentPhone={studentPhone} />;
-  if (showInstructions) return <Instructions onStartTest={() => setShowQuiz(true)} />;
+  if (showQuiz) {
+    console.log('Rendering Quiz component with:', {
+      studentName,
+      studentEmail,
+      studentPhone,
+      preFetchedQuestions
+    });
+    return <Quiz 
+      studentName={studentName} 
+      studentEmail={studentEmail} 
+      studentPhone={studentPhone} 
+      preFetchedQuestions={preFetchedQuestions}
+    />;
+  }
+  if (showInstructions) {
+    console.log('Rendering Instructions component');
+    return <Instructions onStartTest={(questions) => {
+      console.log('Instructions onStartTest called with questions:', questions);
+      setPreFetchedQuestions(questions);
+      setShowQuiz(true);
+    }} />;
+  }
 
   return (
     <div style={{

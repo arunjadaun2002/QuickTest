@@ -10,15 +10,17 @@ const paletteColors = {
 
 const indexToLetter = (idx) => String.fromCharCode(65 + idx); // 0 -> 'A', 1 -> 'B', etc.
 
-const Quiz = ({ studentName, studentEmail, studentPhone }) => {
+const Quiz = ({ studentName, studentEmail, studentPhone, preFetchedQuestions }) => {
+  console.log('Quiz component mounted with pre-fetched questions:', preFetchedQuestions);
   const [quiz, setQuiz] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [questions, setQuestions] = useState(preFetchedQuestions || []);
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState({});
   const [marked, setMarked] = useState({});
   const [visited, setVisited] = useState({});
-  const [timeLeft, setTimeLeft] = useState(180 * 60); // 3 hours in seconds
+  const [timeLeft, setTimeLeft] = useState(10800); // 3 hours in seconds
   const [submitted, setSubmitted] = useState(false);
   const [warnings, setWarnings] = useState(0);
   const [showWarning, setShowWarning] = useState(false);
@@ -40,7 +42,21 @@ const Quiz = ({ studentName, studentEmail, studentPhone }) => {
   const [feedbackDetail, setFeedbackDetail] = useState('');
   const [feedbackRating, setFeedbackRating] = useState(0);
 
-  const questions = quiz?.questions || [];
+  useEffect(() => {
+    console.log('Initializing answers and visited state');
+    // Initialize answers and visited state if we have questions
+    if (questions.length > 0) {
+      const initialAnswers = {};
+      const initialVisited = {};
+      questions.forEach((_, idx) => {
+        initialAnswers[idx] = '';
+        initialVisited[idx] = false;
+      });
+      setAnswers(initialAnswers);
+      setVisited(initialVisited);
+      console.log('Initialized answers and visited state:', { initialAnswers, initialVisited });
+    }
+  }, [questions]);
 
   const handleSubmit = async (isAuto = false, preCalculatedScore = null) => {
     // Prevent multiple submissions

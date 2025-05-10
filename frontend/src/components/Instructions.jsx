@@ -1,10 +1,49 @@
 import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 
 const Instructions = ({ onStartTest }) => {
   const [checked, setChecked] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [warnings, setWarnings] = useState(0);
   const [showWarning, setShowWarning] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [questions, setQuestions] = useState([]);
+  const [isDataReady, setIsDataReady] = useState(false);
+
+  // Pre-fetch questions when Instructions component mounts
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      try {
+        const response = await axios.get('https://quicktest-backend.onrender.com/quiz');
+        console.log('Successfully fetched questions:', response.data);
+        setQuestions(response.data.questions || []);
+        setIsDataReady(true);
+      } catch (error) {
+        console.error('Error pre-fetching questions:', error);
+      }
+    };
+    fetchQuestions();
+  }, []);
+
+  // Pre-request fullscreen when checkbox is checked
+  useEffect(() => {
+    if (checked && !isFullScreen) {
+      const requestFullscreen = async () => {
+        try {
+          if (document.documentElement.requestFullscreen) {
+            await document.documentElement.requestFullscreen();
+          } else if (document.documentElement.webkitRequestFullscreen) {
+            await document.documentElement.webkitRequestFullscreen();
+          } else if (document.documentElement.msRequestFullscreen) {
+            await document.documentElement.msRequestFullscreen();
+          }
+        } catch (error) {
+          console.error('Error requesting fullscreen:', error);
+        }
+      };
+      requestFullscreen();
+    }
+  }, [checked, isFullScreen]);
 
   useEffect(() => {
     // Check if already in fullscreen
@@ -63,17 +102,20 @@ const Instructions = ({ onStartTest }) => {
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, []);
 
-  const handleStartTest = () => {
-    if (!isFullScreen) {
-      if (document.documentElement.requestFullscreen) {
-        document.documentElement.requestFullscreen();
-      } else if (document.documentElement.webkitRequestFullscreen) {
-        document.documentElement.webkitRequestFullscreen();
-      } else if (document.documentElement.msRequestFullscreen) {
-        document.documentElement.msRequestFullscreen();
-      }
+  const handleStartTest = async () => {
+    if (!isDataReady) {
+      console.log('Data not ready yet');
+      return;
     }
-    onStartTest();
+
+    setIsLoading(true);
+    try {
+      // Pass pre-fetched questions to the test component
+      onStartTest(questions);
+    } catch (error) {
+      console.error('Error starting test:', error);
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -356,30 +398,47 @@ const Instructions = ({ onStartTest }) => {
         <div style={{ textAlign: 'center' }}>
           <button
             onClick={handleStartTest}
-            disabled={!checked}
+            disabled={!checked || isLoading || !isDataReady}
             style={{
               padding: '1rem 4rem',
               fontSize: '1.2rem',
               borderRadius: '12px',
-              background: checked 
+              background: checked && !isLoading && isDataReady
                 ? 'linear-gradient(90deg, #3b4cb8, #4e54c8)' 
                 : '#e2e8f0',
               color: '#fff',
               border: 'none',
               fontWeight: 700,
-              cursor: checked ? 'pointer' : 'not-allowed',
-              boxShadow: checked 
+              cursor: checked && !isLoading && isDataReady ? 'pointer' : 'not-allowed',
+              boxShadow: checked && !isLoading && isDataReady
                 ? '0 4px 12px rgba(78,84,200,0.3)' 
                 : 'none',
               transition: 'all 0.3s ease',
-              transform: checked ? 'translateY(0)' : 'none',
-              ':hover': checked ? {
-                transform: 'translateY(-2px)',
-                boxShadow: '0 6px 16px rgba(78,84,200,0.4)'
-              } : {}
+              transform: checked && !isLoading && isDataReady ? 'translateY(0)' : 'none',
+              position: 'relative'
             }}
           >
-            Start Test
+            {isLoading ? (
+              <>
+                <span style={{ opacity: 0 }}>Start Test</span>
+                <div style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  width: '20px',
+                  height: '20px',
+                  border: '3px solid #ffffff',
+                  borderRadius: '50%',
+                  borderTopColor: 'transparent',
+                  animation: 'spin 1s linear infinite'
+                }} />
+              </>
+            ) : !isDataReady ? (
+              'Loading Questions...'
+            ) : (
+              'Start Test'
+            )}
           </button>
         </div>
       </div>
@@ -395,6 +454,10 @@ const Instructions = ({ onStartTest }) => {
               transform: translate(-50%, 0);
               opacity: 1;
             }
+          }
+          @keyframes spin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
           }
         `}
       </style>
