@@ -9,6 +9,7 @@ const Instructions = ({ onStartTest }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [questions, setQuestions] = useState([]);
   const [isDataReady, setIsDataReady] = useState(false);
+  const [showLoadingOverlay, setShowLoadingOverlay] = useState(false);
 
   // Pre-fetch questions when Instructions component mounts
   useEffect(() => {
@@ -109,12 +110,14 @@ const Instructions = ({ onStartTest }) => {
     }
 
     setIsLoading(true);
+    setShowLoadingOverlay(true);
     try {
       // Pass pre-fetched questions to the test component
       onStartTest(questions);
     } catch (error) {
       console.error('Error starting test:', error);
       setIsLoading(false);
+      setShowLoadingOverlay(false);
     }
   };
 
@@ -122,8 +125,54 @@ const Instructions = ({ onStartTest }) => {
     <div style={{ 
       minHeight: '100vh', 
       background: 'linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%)',
-      padding: '2rem 1rem'
+      padding: '2rem 1rem',
+      position: 'relative'
     }}>
+      {/* Loading Overlay */}
+      {showLoadingOverlay && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.8)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          backdropFilter: 'blur(5px)'
+        }}>
+          <div style={{
+            width: '80px',
+            height: '80px',
+            border: '4px solid #f3f3f3',
+            borderTop: '4px solid #3b4cb8',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            marginBottom: '20px'
+          }} />
+          <div style={{
+            color: '#fff',
+            fontSize: '1.5rem',
+            fontWeight: 600,
+            textAlign: 'center',
+            marginBottom: '10px'
+          }}>
+            Starting Test...
+          </div>
+          <div style={{
+            color: '#ccc',
+            fontSize: '1rem',
+            textAlign: 'center',
+            maxWidth: '300px'
+          }}>
+            Please wait while we prepare your test environment
+          </div>
+        </div>
+      )}
+
       {/* Header Bar */}
       <div style={{ 
         background: 'linear-gradient(90deg, #3b4cb8 0%, #4e54c8 100%)',
