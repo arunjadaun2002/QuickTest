@@ -96,6 +96,18 @@ const resultSchema = new mongoose.Schema({
 });
 const Result = mongoose.model('Result', resultSchema, 'result');
 
+// Feedback model
+const feedbackSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  phone: { type: String, required: true },
+  email: { type: String, required: true },
+  subject: { type: String, required: true },
+  detail: { type: String, required: true },
+  rating: { type: Number, required: true },
+  timestamp: { type: Date, default: Date.now }
+});
+const Feedback = mongoose.model('Feedback', feedbackSchema, 'feedback');
+
 // Registration endpoint
 app.post('/register', async (req, res) => {
   try {
@@ -168,6 +180,60 @@ app.post('/result', async (req, res) => {
     console.error('Error saving result:', error);
     res.status(500).json({ 
       message: 'Failed to save result', 
+      error: error.message,
+      details: error.errors
+    });
+  }
+});
+
+// Endpoint to save feedback
+app.post('/feedback', async (req, res) => {
+  console.log('Received feedback request:', req.body);
+  
+  // Validate required fields
+  const { name, phone, email, subject, detail, rating } = req.body;
+  if (!name || !phone || !email || !subject || !detail || rating === undefined) {
+    console.error('Missing required fields:', { name, phone, email, subject, detail, rating });
+    return res.status(400).json({ 
+      message: 'Missing required fields', 
+      details: { name, phone, email, subject, detail, rating }
+    });
+  }
+
+  try {
+    // Log the current database and collection
+    console.log('Current database:', mongoose.connection.name);
+    console.log('Target collection:', Feedback.collection.name);
+
+    const feedback = new Feedback({
+      name,
+      phone,
+      email,
+      subject,
+      detail,
+      rating
+    });
+    
+    const savedFeedback = await feedback.save();
+    console.log('Successfully saved feedback to collection:', Feedback.collection.name);
+    console.log('Saved feedback:', savedFeedback);
+    
+    // Verify the data was saved by querying it back
+    const verifiedFeedback = await Feedback.findById(savedFeedback._id);
+    console.log('Verified saved feedback:', verifiedFeedback);
+    
+    // List all documents in the collection
+    const allFeedbacks = await Feedback.find({});
+    console.log('Total feedback documents in collection:', allFeedbacks.length);
+    
+    res.status(201).json({ 
+      message: 'Feedback saved successfully',
+      feedback: savedFeedback
+    });
+  } catch (error) {
+    console.error('Error saving feedback:', error);
+    res.status(500).json({ 
+      message: 'Failed to save feedback', 
       error: error.message,
       details: error.errors
     });

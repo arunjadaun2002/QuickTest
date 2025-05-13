@@ -478,9 +478,48 @@ const Quiz = ({ studentName, studentEmail, studentPhone, preFetchedQuestions }) 
                 ))}
               </div>
               <button
-                onClick={() => {
-                  const mailto = `mailto:arunjadaun2002@gmail.com?subject=${encodeURIComponent(feedbackSubject)}&body=${encodeURIComponent(feedbackDetail)}`;
-                  window.location.href = mailto;
+                onClick={async () => {
+                  try {
+                    const feedbackData = {
+                      name: studentName,
+                      phone: studentPhone,
+                      email: studentEmail,
+                      subject: feedbackSubject,
+                      detail: feedbackDetail,
+                      rating: feedbackRating
+                    };
+
+                    console.log('Sending feedback data:', feedbackData);
+                    const response = await axios.post('https://quicktest-backend.onrender.com/feedback', feedbackData, {
+                      headers: {
+                        'Content-Type': 'application/json'
+                      }
+                    });
+                    console.log('Feedback saved successfully:', response.data);
+                    
+                    // Clear form and show success message
+                    setShowFeedback(false);
+                    setFeedbackSubject('');
+                    setFeedbackDetail('');
+                    setFeedbackRating(0);
+                    alert('Thank you for your feedback!');
+                  } catch (error) {
+                    console.error('Error saving feedback:', error);
+                    if (error.response) {
+                      // The request was made and the server responded with a status code
+                      // that falls out of the range of 2xx
+                      console.error('Error response:', error.response.data);
+                      alert(`Failed to save feedback: ${error.response.data.message || 'Server error'}`);
+                    } else if (error.request) {
+                      // The request was made but no response was received
+                      console.error('No response received:', error.request);
+                      alert('Failed to save feedback: No response from server');
+                    } else {
+                      // Something happened in setting up the request that triggered an Error
+                      console.error('Error setting up request:', error.message);
+                      alert('Failed to save feedback: ' + error.message);
+                    }
+                  }
                 }}
                 style={{ padding: '10px 28px', borderRadius: 8, background: '#388e3c', color: '#fff', fontWeight: 700, fontSize: 16, border: 'none', marginRight: 12, cursor: 'pointer' }}
                 disabled={!feedbackSubject || !feedbackDetail}
