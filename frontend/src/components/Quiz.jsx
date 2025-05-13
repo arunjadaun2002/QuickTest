@@ -407,7 +407,7 @@ const Quiz = ({ studentName, studentEmail, studentPhone, preFetchedQuestions }) 
           </div>
         )}
         <div style={{ marginBottom: 24, fontSize: 18 }}>
-          <b>Score: {score} / {questions.length}</b>
+          <b>Score: {score} / {questions.length*4}</b>
         </div>
         {resultSaved && <div style={{ color: '#388e3c', marginBottom: 16 }}>Your result has been saved!</div>}
         {!resultSaved && <div style={{ color: '#d7263d', marginBottom: 16 }}>Result not saved or server error.</div>}
