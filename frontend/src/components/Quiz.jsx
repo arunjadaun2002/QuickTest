@@ -41,6 +41,7 @@ const Quiz = ({ studentName, studentEmail, studentPhone, preFetchedQuestions }) 
   const [feedbackSubject, setFeedbackSubject] = useState('');
   const [feedbackDetail, setFeedbackDetail] = useState('');
   const [feedbackRating, setFeedbackRating] = useState(0);
+  const [feedbackSuccess, setFeedbackSuccess] = useState(false);
 
   useEffect(() => {
     console.log('Initializing answers and visited state');
@@ -497,25 +498,21 @@ const Quiz = ({ studentName, studentEmail, studentPhone, preFetchedQuestions }) 
                     });
                     console.log('Feedback saved successfully:', response.data);
                     
-                    // Clear form and show success message
                     setShowFeedback(false);
                     setFeedbackSubject('');
                     setFeedbackDetail('');
                     setFeedbackRating(0);
-                    alert('Thank you for your feedback!');
+                    setFeedbackSuccess(true);
+                    setTimeout(() => setFeedbackSuccess(false), 4000);
                   } catch (error) {
                     console.error('Error saving feedback:', error);
                     if (error.response) {
-                      // The request was made and the server responded with a status code
-                      // that falls out of the range of 2xx
                       console.error('Error response:', error.response.data);
                       alert(`Failed to save feedback: ${error.response.data.message || 'Server error'}`);
                     } else if (error.request) {
-                      // The request was made but no response was received
                       console.error('No response received:', error.request);
                       alert('Failed to save feedback: No response from server');
                     } else {
-                      // Something happened in setting up the request that triggered an Error
                       console.error('Error setting up request:', error.message);
                       alert('Failed to save feedback: ' + error.message);
                     }
@@ -535,6 +532,22 @@ const Quiz = ({ studentName, studentEmail, studentPhone, preFetchedQuestions }) 
             </div>
           )}
         </div>
+        {/* Show feedback success message */}
+        {feedbackSuccess && (
+          <div style={{
+            marginTop: 24,
+            color: '#fff',
+            background: '#43a047',
+            padding: '14px 0',
+            borderRadius: 8,
+            fontWeight: 600,
+            fontSize: 18,
+            textAlign: 'center',
+            boxShadow: '0 1px 4px rgba(0,0,0,0.08)'
+          }}>
+            Thank you! Your feedback has been sent.
+          </div>
+        )}
       </div>
     );
   }
